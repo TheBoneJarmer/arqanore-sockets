@@ -11,8 +11,6 @@
 using namespace std;
 using namespace arqanore;
 
-std::string input;
-std::string output;
 Font *font;
 
 void on_open(Window *window) {
@@ -62,22 +60,14 @@ void on_update(Window *window, double at) {
     }
 
     if (Keyboard::key_pressed(Keys::ENTER)) {
-        auto res = send(input);
-        input.clear();
-
+        auto res = send("ping");
         cout << res << endl;
     }
 }
 
 void on_render2d(Window *window) {
     try {
-        float textWidth = font->measure(input, 1.f);
 
-        Vector2 pos;
-        pos.x = window->get_width() / 2.f - textWidth / 2.f;
-        pos.y = window->get_height() / 2.f;
-
-        Renderer::render_text(window, font, input, pos, Vector2::ONE, Color::WHITE);
     } catch (ArqanoreException& ex) {
         cerr << ex.what() << endl;
         window->close();
@@ -89,7 +79,7 @@ void on_render3d(Window *window) {
 }
 
 void on_char(Window *window, unsigned int codepoint) {
-    input += (char) codepoint;
+
 }
 
 void on_opengl(Window *window, string type, string severity, string message) {

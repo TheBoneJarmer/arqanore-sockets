@@ -1,5 +1,5 @@
 #include <sstream>
-#include "arqmessage.h"
+#include "arqanore/arqmessage.h"
 
 const std::string arqanore::ArqMessage::PREFIX = "<ARQ>";
 const std::string arqanore::ArqMessage::SUFFIX = "</ARQ>";
