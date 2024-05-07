@@ -1,10 +1,7 @@
 #include <iostream>
-#include <thread>
 #include "arqanore/window.h"
 #include "arqanore/keyboard.h"
 #include "arqanore/exceptions.h"
-#include "arqanore/renderer.h"
-#include "arqanore/font.h"
 #include "arqanore/arqsocket.h"
 #include "arqanore/arqmessage.h"
 
@@ -34,8 +31,9 @@ std::string send(std::string action) {
         char buffer[1024];
 
         auto socket = ArqSocket();
-        socket.connect("192.168.0.136", 9091);
-		socket.set_rcv_timeout(1000);
+        socket.read_timeout = 1000;
+
+        socket.connect("localhost", 9091);
         socket.send(msg.to_string());
 
         auto read = socket.read(buffer, 1024);
@@ -55,8 +53,13 @@ void on_update(Window *window, double at) {
     }
 
     if (Keyboard::key_pressed(Keys::ENTER)) {
-        auto res = send("pong");
-        cout << res << endl;
+        auto res = send("ping");
+
+        if (res.empty()) {
+            cerr << "Response is empty" << endl;
+        } else {
+            cout << res << endl;
+        }
     }
 }
 

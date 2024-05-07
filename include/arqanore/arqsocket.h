@@ -13,6 +13,7 @@
 
 // Linux
 #else
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -30,17 +31,24 @@ namespace arqanore {
     class ArqSocket {
     private:
         SOCKET handler;
+
         struct addrinfo *get_addrinfo(std::string host, int port);
-		void init_winsock();
-		void cleanup_winsock();
-		void handle_errno(std::string function);
+
+        void init_winsock();
+
+        void cleanup_winsock();
+
+        void handle_error(std::string function);
+
+        void set_read_timeout(int socket, long ms);
+
+        void set_send_timeout(int socket, long ms);
 
     public:
+        int read_timeout;
+        int send_timeout;
+
         ArqSocket();
-		
-		void set_rcv_timeout(long ms);
-		
-		void set_send_timeout(long ms);
 
         void connect(std::string host, int port);
 

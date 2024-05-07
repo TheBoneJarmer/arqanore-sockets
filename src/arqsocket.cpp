@@ -43,7 +43,7 @@ void arqanore::ArqSocket::cleanup_winsock() {
 #endif
 }
 
-void arqanore::ArqSocket::handle_errno(std::string function) {
+void arqanore::ArqSocket::handle_error(std::string function) {
 #ifdef _WIN32
 	int err_code = WSAGetLastError();
 	std::string err_str;
@@ -64,46 +64,48 @@ void arqanore::ArqSocket::handle_errno(std::string function) {
 #endif
 }
 
+void arqanore::ArqSocket::set_read_timeout(int socket, long msec) {
+    int result = 0;
+
+#ifdef _WIN32
+    result = setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char *) &msec, sizeof(msec));
+#else
+    struct timeval timeout;
+    timeout.tv_sec = msec / 1000;
+    timeout.tv_usec = (msec * 1000) % 1000000;
+
+    result = setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+#endif
+
+    if (result == -1) {
+        handle_error("setsockopt");
+    }
+}
+
+void arqanore::ArqSocket::set_send_timeout(int socket, long msec) {
+    int result = 0;
+
+#ifdef _WIN32
+    result = setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, (char *) &msec, sizeof(msec));
+#else
+    struct timeval timeout;
+    timeout.tv_sec = msec / 1000;
+    timeout.tv_usec = (msec * 1000) % 1000000;
+
+    result = setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
+#endif
+
+    if (result == -1) {
+        handle_error("setsockopt");
+    }
+}
+
 arqanore::ArqSocket::ArqSocket() {
     handler = INVALID_SOCKET;
+    read_timeout = 0;
+    send_timeout = 0;
 	
 	this->init_winsock();
-}
-
-void arqanore::ArqSocket::set_rcv_timeout(long msec) {
-	int result = 0;
-	
-#ifdef _WIN32
-    result = setsockopt(handler, SOL_SOCKET, SO_RCVTIMEO, (char *) &msec, sizeof(msec));
-#else
-	struct timeval timeout;
-	timeout.tv_sec = msec / 1000;
-	timeout.tv_usec = (msec * 1000) % 1000000;
-	
-	result = setsockopt(handler, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-#endif
-
-	if (result == -1) {
-		handle_errno("setsockopt");
-	}
-}
-
-void arqanore::ArqSocket::set_send_timeout(long msec) {
-	int result = 0;
-	
-#ifdef _WIN32
-    result = setsockopt(handler, SOL_SOCKET, SO_SNDTIMEO, (char *) &msec, sizeof(msec));
-#else
-	struct timeval timeout;
-	timeout.tv_sec = msec / 1000;
-	timeout.tv_usec = (msec * 1000) % 1000000;
-	
-	result = setsockopt(handler, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
-#endif
-
-	if (result == -1) {
-		handle_errno("setsockopt");
-	}
 }
 
 void arqanore::ArqSocket::connect(std::string host, int port) {
@@ -111,13 +113,16 @@ void arqanore::ArqSocket::connect(std::string host, int port) {
     auto socket = ::socket(addrinfo->ai_family, addrinfo->ai_socktype, addrinfo->ai_protocol);
 
     if (socket == INVALID_SOCKET) {
-		handle_errno("socket");
+        handle_error("socket");
     }
+
+    set_read_timeout(socket, read_timeout);
+    set_send_timeout(socket, send_timeout);
 
     auto result = ::connect(socket, addrinfo->ai_addr, addrinfo->ai_addrlen);
 
     if (result == SOCKET_ERROR) {
-		handle_errno("connect");
+        handle_error("connect");
     }
 
     this->handler = socket;
@@ -129,7 +134,7 @@ int arqanore::ArqSocket::send(std::string data) {
     auto result = ::send(handler, data_cstr, data_len, 0);
 
     if (result == -1) {
-		handle_errno("send");
+        handle_error("send");
     }
 
     return result;
@@ -139,7 +144,7 @@ int arqanore::ArqSocket::read(char *buffer, int buffer_length) {
     auto result = ::recv(handler, buffer, buffer_length - 1, 0);
 
     if (result == -1) {
-        handle_errno("read");
+        handle_error("read");
     }
 
     return result;
@@ -153,7 +158,7 @@ void arqanore::ArqSocket::close() {
 	auto result = ::close(handler);
 
     if (result == -1) {
-        handle_errno("close");
+        handle_error("close");
     }
 #endif
 }
