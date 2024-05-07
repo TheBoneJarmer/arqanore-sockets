@@ -11,18 +11,12 @@
 using namespace std;
 using namespace arqanore;
 
-Font *font;
-
 void on_open(Window *window) {
-    try {
-        font = new Font("assets/default.ttf", 20, 20);
-    } catch (arqanore::ArqanoreException &ex) {
-        cerr << ex.what() << endl;
-    }
+    
 }
 
 void on_close(Window *window) {
-    delete font;
+    
 }
 
 void on_tick(Window *window, double dt) {
@@ -40,7 +34,8 @@ std::string send(std::string action) {
         char buffer[1024];
 
         auto socket = ArqSocket();
-        socket.connect("localhost", 9091);
+        socket.connect("192.168.0.136", 9091);
+		socket.set_rcv_timeout(1000);
         socket.send(msg.to_string());
 
         auto read = socket.read(buffer, 1024);
@@ -60,7 +55,7 @@ void on_update(Window *window, double at) {
     }
 
     if (Keyboard::key_pressed(Keys::ENTER)) {
-        auto res = send("ping");
+        auto res = send("pong");
         cout << res << endl;
     }
 }
